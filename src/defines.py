@@ -48,33 +48,39 @@ def plotar_sinal_temporal(vetor_gravacao, sampling_rate):
     periodo_amostragem = 1 / sampling_rate
     x_axis = np.arange(0, len(vetor_gravacao)) * periodo_amostragem
 
-    plt.subplot(2, 2, 1)
-    plt.plot(x_axis, vetor_gravacao)
+    plt.plot(x_axis, vetor_gravacao, linewidth=.5)
     plt.title("Sinal adquirido na entrada")
     plt.xlabel("Tempo (s)")
     plt.ylabel("Amplitude")
+    plt.subplots_adjust(hspace=0.5, wspace=0.5)    
 
-def plotar_fft(vetor_gravacao, sampling_rate):
-    periodo_amostragem = 1 / sampling_rate
-    eixoX_FFT = np.fft.fftshift(np.fft.fftfreq(len(vetor_gravacao), periodo_amostragem))
-
-    indice_central = len(eixoX_FFT) // 2
-
-    saida_fft = np.abs(np.fft.fftshift(np.fft.fft(vetor_gravacao)))
-
-    plt.subplot(2, 2, 3)
-    plt.plot(eixoX_FFT[indice_central:], saida_fft[indice_central:], linewidth=3)
-    plt.title("Magnitude Complexa do Espectro da FFT")
-    plt.xlabel("f (Hz)")
-    plt.ylabel("Módulo FFT")
-    plt.subplots_adjust(hspace=0.5)
-
-def plotar_espectrograma(file_name):
+def plotar_espectrograma(file_name, hop_length=512, n_fft=2048):
     y, sr = librosa.load(file_name)
-    D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
+    D = librosa.amplitude_to_db(np.abs(librosa.stft(y, hop_length=hop_length, n_fft=n_fft)), ref=np.max)
 
-    plt.subplot(1, 2, 2)
-    librosa.display.specshow(D, sr=sr, x_axis='time', y_axis='log')
+    librosa.display.specshow(D, sr=sr, hop_length=hop_length, x_axis='time', y_axis='log')
     plt.colorbar(format='%+2.0f dB')
     plt.title('Espectrograma')
     plt.xlabel('Tempo (s)')
+    plt.subplots_adjust(hspace=0.5, wspace=0.5)
+    
+def calcular_tdf(sinal, tamanho_janela = 2048, posicao_janela = 0):
+    janela = np.hamming(tamanho_janela)
+    sinal_janelado = sinal[posicao_janela:posicao_janela + tamanho_janela] * janela
+    tdf = np.fft.fft(sinal_janelado)
+    frequencias = np.fft.fftfreq(tamanho_janela)
+    return frequencias, tdf
+
+def plotar_tdf(sinal, taxa_amostragem, tamanho_janela = 2048, posicao_janela = 0):
+    frequencias, tdf = calcular_tdf(sinal, tamanho_janela, posicao_janela)
+    frequencias_hz = frequencias * taxa_amostragem
+
+    # Encontra o índice correspondente à metade positiva das frequências
+    metade_tamanho = tamanho_janela // 2
+
+    # Plota apenas a parte positiva da TDF
+    plt.plot(frequencias_hz[:metade_tamanho], np.abs(tdf[:metade_tamanho]), linewidth=.5)
+    plt.title('Transformada Discreta de Fourier (TDF)')
+    plt.xlabel('Frequência (Hz)')
+    plt.ylabel('Magnitude')
+    plt.subplots_adjust(hspace=0.5, wspace=0.5)
