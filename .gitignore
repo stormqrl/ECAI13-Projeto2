@@ -2,3 +2,5 @@ venv
 Projeto.pdf
 audio_*.wav
 __pycache__
+/build/
+/dist/

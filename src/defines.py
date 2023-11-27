@@ -5,7 +5,6 @@ from scipy.io import wavfile
 import librosa
 import librosa.display
 import glob
-from scipy.signal import find_peaks, butter, lfilter
 
 from scipy.signal import butter, lfilter
 
@@ -52,43 +51,6 @@ def pb_f(sinal, taxa_amostragem, frequencia_corte=4000, ordem=4):
     return sinal_filtrado
 
 
-def gravar_audio(file_name, sampling_rate, record_time=5):
-    chunk = 1024
-    formato = pyaudio.paInt16
-    canais = 1
-
-    p = pyaudio.PyAudio()
-    stream = p.open(
-        format=formato,
-        channels=canais,
-        rate=sampling_rate,
-        input=True,
-        frames_per_buffer=chunk,
-    )
-
-    frames = []
-
-    print("Comece a falar.")
-    for i in range(0, int(sampling_rate / chunk * record_time)):
-        data = stream.read(chunk)
-        frames.append(np.frombuffer(data, dtype=np.int16))
-
-    print("Pare de falar.")
-
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
-
-    vetor_gravacao = np.concatenate(frames)
-    wavfile.write(file_name, sampling_rate, vetor_gravacao)
-
-    return vetor_gravacao
-
-
-def abrir_arquivo_audio(file_name):
-    vetor_gravacao, _ = librosa.load(file_name, sr=None)
-    return vetor_gravacao
-
 
 def encontrar_proximo_numero():
     audio_files = glob.glob("audio_*.wav")
@@ -98,6 +60,10 @@ def encontrar_proximo_numero():
     else:
         return 1
 
+
+def abrir_arquivo_audio(file_name):
+    vetor_gravacao, _ = librosa.load(file_name, sr=None)
+    return vetor_gravacao
 
 def plotar_sinal_temporal(vetor_gravacao, sampling_rate):
     periodo_amostragem = 1 / sampling_rate
@@ -198,7 +164,7 @@ def plotar_tdf(sinal, taxa_amostragem, tamanho_janela=2048, posicao_janela=0):
     plt.subplots_adjust(hspace=0.5, wspace=0.5)
 
 
-def plotar_tdf_com_picos(sinal, taxa_amostragem, tamanho_janela=2048, posicao_janela=0):
+def plotar_tdf_com_picos(sinal:np.ndarray, taxa_amostragem:int, tamanho_janela:int = 2048, posicao_janela:int=0):
     frequencias_picos, magnitudes_picos = encontrar_maiores_picos_tdf(
         sinal, taxa_amostragem, tamanho_janela, posicao_janela
     )
